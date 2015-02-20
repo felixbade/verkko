@@ -1,0 +1,46 @@
+<!DOCTYPE HTML>
+<html lang="fi">
+    <head>
+        <title>Verkkokuvaaja</title>
+        <meta charset="utf-8">
+        <link rel="stylesheet" href="style.css" type="text/css" />
+    </head>
+    <body>
+        <div class="content">
+            <div>
+                <h1>Verkkokuvaaja</h1>
+                <p>Optimoitu noin sadalle solmulle ja tuhannelle kaarelle. Solmuja voi siirtää hiirellä.</p>
+                <div>
+                    <textarea id="data">[["Liisa", "Maria"], ["Maria", "Sara"], ["Sara", "Liisa"], ["Liisa", "Kalle"], ["Maria", "Leevi"]]</textarea>
+                </div>
+                <div>
+                    <button id="updatebutton">Piirr&auml;</button>
+                </div>
+                <span class="sliderdescription">Tarkkuus:</span><input type="range" id="delta_t" class="slider" value="20" step="0.1" />
+                <br>
+                <span class="sliderdescription">Tiukkuus:</span><input type="range" id="tightness" class="slider" step="0.1" />
+                <br>
+                <label for="emphasize-important-vertices">Korosta tärkeitä solmuja:</label>
+                <input type="checkbox" id="emphasize-important-vertices" />
+                <br>
+                <label for="hide-some-edges">Piilota osa viivoista:</label>
+                <input type="checkbox" id="hide-some-edges" />
+                <br>
+                <label for="stopped">Pysäytetty:</label>
+                <input type="checkbox" id="stopped" />
+                <br>
+                <div id="wrapper">
+                    <canvas id="graafi" width="900" height="750">Selaimesi ei tue &lt;canvas&gt;-elementti&amul;.</canvas>
+                    <div id="vertex-info"></div>
+                </div>
+                <div>
+                    <button id="savebutton">Tallenna kuva</button>
+                </div>
+                <script src="verkko.js"></script>
+            </div>
+            <footer>
+            &copy; 2015 Felix Bade
+            </footer>
+        </div>
+    </body>
+</html>
