@@ -407,8 +407,8 @@ function showLabel(text, x, y) {
 // These must be in the end :(
 
 document.getElementById("updatebutton").onclick = initialize;
-document.getElementById("delta_t").onupdate = updateDeltaT;
-document.getElementById("tightness").onupdate = updateTightness;
+document.getElementById("delta_t").oninput = updateDeltaT;
+document.getElementById("tightness").oninput = updateTightness;
 document.getElementById("stopped").onclick = tick;
 document.getElementById("hide-some-edges").onclick = reDraw;
 document.getElementById("emphasize-important-vertices").onclick = reDraw;
