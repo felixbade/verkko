@@ -11,7 +11,10 @@
                 <h1>Verkkokuvaaja</h1>
                 <p>Optimoitu noin sadalle solmulle ja tuhannelle kaarelle. Solmuja voi siirtää hiirellä.</p>
                 <div>
-                    <textarea id="data">[["Liisa", "Maria"], ["Maria", "Sara"], ["Sara", "Liisa"], ["Liisa", "Kalle"], ["Maria", "Leevi"]]</textarea>
+                    <textarea id="data">
+Liisa -- Maria -- Sara -- Liisa -- Kalle
+Maria -- Leevi
+                    </textarea>
                 </div>
                 <div>
                     <button id="updatebutton">Piirrä</button>
@@ -37,9 +40,10 @@
                     <button id="savebutton">Tallenna kuva</button>
                 </div>
                 <script src="verkko.js"></script>
+                <script src="parser.js"></script>
             </div>
             <footer>
-            &copy; 2015 Felix Bade &middot; <a href="https://github.com/felixbade/verkko">Lähdekoodi</a>
+                &copy; 2015 Felix Bade &middot; <a href="https://github.com/felixbade/verkko">Lähdekoodi</a>
             </footer>
         </div>
     </body>
