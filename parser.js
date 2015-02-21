@@ -39,6 +39,7 @@ var GraphParser = (function () {
      */
     Graph.prototype.ensureNode = function (key) {
         this.nodes[key] = this.nodes[key] || new Node(key);
+        return this.nodes[key];
     };
 
     /**
@@ -93,7 +94,7 @@ var GraphParser = (function () {
 
     var parser = {};
 
-    var parserRegex = /([\w ]+)(--|->|;|$)/gm;
+    var parserRegex = /([\w ]+)(--|->|;|$|\ *\[(\w+)=(\w+)\])/gm;
 
     /**
      * Parses a specially formatted string to create the list of connections.
@@ -121,6 +122,9 @@ var GraphParser = (function () {
                 linkNext = 2;
             } else {
                 linkNext = 0;
+            }
+            if(oper[0] == "[") {
+                graph.ensureNode(key).setAttribute(result[3], result[4]);
             }
             prevKey = key;
         }
