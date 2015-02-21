@@ -36,7 +36,7 @@ function save() {
 // Initialization stuff
 
 function parseInput() {
-    var edgeNames = JSON.parse(dataInputElement.value);
+    var edgeNames = GraphParser.parseString(dataInputElement.value).compatibilityForm();
     findUniqueVertices(edgeNames);
     parseEdges(edgeNames);
     checkVerticesThatConnectOtherVertices();
