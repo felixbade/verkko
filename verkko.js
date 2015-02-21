@@ -7,14 +7,18 @@ var dataInputElement = document.getElementById("data");
 
 context.lineWidth = 1.5;
 var maxAllowedForce = 10;
+var magnification, offsetX, offsetY;
 
 var radius, vertexXs, vertexYs, vertexNames, vertexNeighbours, vertexConnectsOthers, edges, numberOfVertices, graphCenterX, graphCenterY, delta_t, pull, push, dx, dy, stopped, vertexVXs, vertexVYs;
 
 function initialize() {
+    magnification = 1;
+    offsetX = 0;
+    offsetY = 0;
+    stopped = false;
     parseInput();
     resizeCanvas();
     clearCanvas();
-    stopped = false;
     tick();
 }
 
@@ -113,8 +117,8 @@ function randomCoordinates() {
     vertexVXs = new Array(numberOfVertices);
     vertexVYs = new Array(numberOfVertices);
     for (var i = 0; i < numberOfVertices; i++) {
-        vertexXs[i] = Math.random() * canvas.width;
-        vertexYs[i] = Math.random() * canvas.height;
+        vertexXs[i] = (Math.random() - 0.5) * canvas.width;
+        vertexYs[i] = (Math.random() - 0.5) * canvas.height;
         vertexVXs[i] = 0;
         vertexVYs[i] = 0;
     }
@@ -226,31 +230,7 @@ function resizeCanvas() {
 
 function reDraw() {
     clearCanvas();
-    if (!isMouseDown) {
-        moveGraphTowardsCenter();
-    }
     drawEdgesAndVertices();
-}
-
-function moveGraphTowardsCenter() {
-    var imageCenterX = canvas.width / 2;
-    var imageCenterY = canvas.height / 2;
-    calculateGraphCenter();
-    for (var i = 0; i < numberOfVertices; i++) {
-        vertexXs[i] += (imageCenterX - graphCenterX) / 30;
-        vertexYs[i] += (imageCenterY - graphCenterY) / 30;
-    }
-}
-
-function calculateGraphCenter() {
-    var xSum = 0;
-    var ySum = 0;
-    for (var i = 0; i < numberOfVertices; i++) {
-        xSum += vertexXs[i];
-        ySum += vertexYs[i];
-    }
-    graphCenterX = xSum / numberOfVertices;
-    graphCenterY = ySum / numberOfVertices;
 }
 
 function drawEdgesAndVertices() {
@@ -324,10 +304,10 @@ function isVertexImportant(vertex) {
 function drawEdge(edge) {
     var vertex1 = edges[edge][0];
     var vertex2 = edges[edge][1];
-    var x1 = vertexXs[vertex1];
-    var y1 = vertexYs[vertex1];
-    var x2 = vertexXs[vertex2];
-    var y2 = vertexYs[vertex2];
+    var x1 = getMappedX(vertexXs[vertex1]);
+    var y1 = getMappedY(vertexYs[vertex1]);
+    var x2 = getMappedX(vertexXs[vertex2]);
+    var y2 = getMappedY(vertexYs[vertex2]);
     context.beginPath();
     context.moveTo(x1, y1);
     context.lineTo(x2, y2);
@@ -335,8 +315,9 @@ function drawEdge(edge) {
 }
 
 function drawVertex(vertex) {
-    var x = vertexXs[vertex];
-    var y = vertexYs[vertex];
+    var x = getMappedX(vertexXs[vertex]);
+  //  * magnification + offsetX + canvas.width / 2;
+    var y = getMappedY(vertexYs[vertex]);// * magnification + offsetY + canvas.height / 2;
     context.beginPath();
     context.arc(x, y, radius, 0, 2 * Math.PI, false);
     context.fill();
@@ -366,8 +347,14 @@ function onMouseDown(event) {
 function onMouseMove(event) {
     updateMouseCoordinates(event);
     if (isMouseDown) {
-        run();
-        moveSelectedVertexToMouse();
+        if (selectedVertex != -1) {
+            run();
+            moveSelectedVertexToMouse();
+        } else {
+            offsetX += event.movementX;
+            offsetY += event.movementY;
+            reDraw();
+        }
     }
     updateLabel();
 }
@@ -377,6 +364,19 @@ function onMouseUp(event) {
     selectedVertex = -1;
 }
 
+function onMouseWheel(event) {
+    var oldX = getUnMappedX(event.offsetX);
+    var oldY = getUnMappedY(event.offsetY);
+    var delta_y = Math.min(10, Math.max(-10, event.wheelDeltaY));
+    magnification *= Math.exp(delta_y / 500);
+    var newX = getUnMappedX(event.offsetX);
+    var newY = getUnMappedY(event.offsetY);
+    offsetX += (newX - oldX) * magnification;
+    offsetY += (newY - oldY) * magnification;
+    reDraw();
+    return false;
+}
+
 function updateMouseCoordinates(event) {
     mouseX = event.offsetX;
     mouseY = event.offsetY;
@@ -384,8 +384,8 @@ function updateMouseCoordinates(event) {
 
 function getVertexByMouseCoordinates() {
     for (var vertex = 0; vertex < numberOfVertices; vertex++) {
-        var dx = vertexXs[vertex] - mouseX;
-        var dy = vertexYs[vertex] - mouseY;
+        var dx = vertexXs[vertex] - getUnMappedX(mouseX);
+        var dy = vertexYs[vertex] - getUnMappedY(mouseY);
         var distance = Math.sqrt(dx*dx + dy*dy);
         if (distance < 8) {
             return vertex;
@@ -396,8 +396,8 @@ function getVertexByMouseCoordinates() {
 
 function moveSelectedVertexToMouse() {
     if (selectedVertex != -1) {
-        vertexXs[selectedVertex] = mouseX;
-        vertexYs[selectedVertex] = mouseY;
+        vertexXs[selectedVertex] = getUnMappedX(mouseX);
+        vertexYs[selectedVertex] = getUnMappedY(mouseY);
         reDraw();
     }
 }
@@ -409,7 +409,7 @@ function updateLabel() {
         vertex = getVertexByMouseCoordinates();
         if (vertex != -1) {
             var name = vertexNames[vertex];
-            showLabel(name, mouseX, mouseY);
+            showLabel(name, mouseX, mouseY + 15);
         } else {
             hideLabel();
         }
@@ -424,6 +424,22 @@ function showLabel(text, x, y) {
     vertexInfo.innerHTML = text;
     vertexInfo.style.left = x + 'px';
     vertexInfo.style.top = y + 'px';
+}
+
+function getMappedX(x) {
+    return x * magnification + offsetX + canvas.width / 2;
+}
+
+function getMappedY(y) {
+    return y * magnification + offsetY + canvas.height / 2;
+}
+
+function getUnMappedX(x) {
+    return (x - offsetX - canvas.width / 2) / magnification;
+}
+
+function getUnMappedY(y) {
+    return (y - offsetY - canvas.height / 2) / magnification;
 }
 
 function run() {
@@ -444,3 +460,4 @@ document.body.onresize = resizeCanvas;
 canvas.addEventListener("mousedown", onMouseDown, true);
 canvas.addEventListener("mouseup", onMouseUp, true);
 canvas.addEventListener("mousemove", onMouseMove, true);
+canvas.addEventListener('mousewheel', onMouseWheel, false);
