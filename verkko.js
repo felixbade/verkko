@@ -19,9 +19,7 @@ function initialize() {
 function tick() {
     simulateGraphForces();
     reDraw();
-    if (!isStopped()) {
-        setTimeout(tick, 20); // timeout makes the simulation visible before it is stopped
-    }
+    requestAnimationFrame(tick);
 }
 
 function isStopped() {
