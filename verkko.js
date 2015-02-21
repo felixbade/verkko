@@ -6,29 +6,24 @@ var vertexInfo = document.getElementById("vertex-info");
 var dataInputElement = document.getElementById("data");
 
 context.lineWidth = 1.5;
-var maxForce = 0.01;
+var maxAllowedForce = 10;
+var continueForceThreshold = 0.03;
 
-var radius, vertexXs, vertexYs, vertexNames, vertexNeighbours, vertexConnectsOthers, edges, numberOfVertices, graphCenterX, graphCenterY, delta_t, pull, push, dx, dy;
+var radius, vertexXs, vertexYs, vertexNames, vertexNeighbours, vertexConnectsOthers, edges, numberOfVertices, graphCenterX, graphCenterY, delta_t, pull, push, dx, dy, stopped, vertexVXs, vertexVYs;
 
 function initialize() {
     clearCanvas();
     parseInput();
+    stopped = false;
     tick();
 }
 
 function tick() {
     simulateGraphForces();
     reDraw();
-    requestAnimationFrame(tick);
-}
-
-function isStopped() {
-    return document.getElementById("stopped").checked;
-}
-
-
-function save() {
-    window.location = canvas.toDataURL("image/png");
+    if (!stopped) {
+        requestAnimationFrame(tick);
+    }
 }
 
 // Initialization stuff
@@ -115,80 +110,110 @@ function areNeighbours(x, y) {
 function randomCoordinates() {
     vertexXs = new Array(numberOfVertices);
     vertexYs = new Array(numberOfVertices);
+    vertexVXs = new Array(numberOfVertices);
+    vertexVYs = new Array(numberOfVertices);
     for (var i = 0; i < numberOfVertices; i++) {
         vertexXs[i] = Math.random() * canvas.width;
         vertexYs[i] = Math.random() * canvas.height;
+        vertexVXs[i] = 0;
+        vertexVYs[i] = 0;
     }
 }
 
 // Simulation stuff
 
 function simulateGraphForces() {
+    var vertexForcesSumXs = new Array(numberOfVertices);
+    var vertexForcesSumYs = new Array(numberOfVertices);
+    var vertexForcesSumRs = new Array(numberOfVertices);
+    var vertexNearestNeighbourDistance = new Array(numberOfVertices);
+
+    for (var vertex = 0; vertex < numberOfVertices; vertex++) {
+        var forcesSumX = 0;
+        var forcesSumY = 0;
+        
+        // calculate pull
+        var neighbours = vertexNeighbours[vertex];
+        for (var i = 0; i < neighbours.length; i++) {
+            var other = neighbours[i];
+            dx = vertexXs[other] - vertexXs[vertex];
+            dy = vertexYs[other] - vertexYs[vertex];
+            // F ~ 1
+            var dr = Math.sqrt(dx*dx + dy*dy);
+            forcesSumX += dx / dr;
+            forcesSumY += dy / dr;
+        }
+
+        // calculate push
+        for (var other = 0; other < numberOfVertices; other++) {
+            if (other == vertex) {
+                continue;
+            }
+            dx = vertexXs[other] - vertexXs[vertex];
+            dy = vertexYs[other] - vertexYs[vertex];
+            // F ~ -1/(r^3)
+            var drSquared = dx*dx + dy*dy;
+            forcesSumX -= 100000 * dx / drSquared / drSquared;
+            forcesSumY -= 100000 * dy / drSquared / drSquared;
+            
+            var dr = Math.sqrt(drSquared);
+            if (vertexNearestNeighbourDistance[vertex] == undefined || dr < vertexNearestNeighbourDistance[vertex]) {
+                vertexNearestNeighbourDistance[vertex] = dr;
+            }
+        }
+
+        // Make sure that forcesSum is not arbitrarily big. If it is, two nodes are probably
+        // just on top of each other
+        forcesSumR = Math.sqrt(forcesSumX*forcesSumX + forcesSumY*forcesSumY);
+        if (forcesSumR > maxAllowedForce) {
+            vertexForcesSumXs[vertex] = forcesSumX * maxAllowedForce / forcesSumR;
+            vertexForcesSumYs[vertex] = forcesSumY * maxAllowedForce / forcesSumR;
+            vertexForcesSumRs[vertex] = maxAllowedForce;
+        } else {
+            vertexForcesSumXs[vertex] = forcesSumX;
+            vertexForcesSumYs[vertex] = forcesSumY;
+            vertexForcesSumRs[vertex] = forcesSumR;
+        }
+    }
+    
+    var minDistancePerForce; 
+    var maxForce = 0;
+    for (var vertex = 0; vertex < numberOfVertices; vertex++) {
+        maxForce = Math.max(maxForce, vertexForcesSumRs[vertex]);
+        var distancePerForce = vertexNearestNeighbourDistance[vertex] / vertexForcesSumRs[vertex];
+        if (vertex == 0 || distancePerForce < minDistancePerForce) {
+            minDistancePerForce = distancePerForce;
+        }
+    }
+    //console.log(vertexForcesSumRs);
+
+    var delta_t = minDistancePerForce / 30; // Prevent bad shaking
+    if (maxForce < 1) {
+        delta_t *= maxForce;
+    }
+    //console.log(minDistancePerForce);
+    if (maxForce < 0.01) {
+        stopped = true;
+    }
+    //console.log(maxForce, delta_t, minDistancePerForce);
+    //console.log(minDistancePerForce);
+    
+    //delta_t = Math.min(10000, delta_t);
     for (var vertex = 0; vertex < numberOfVertices; vertex++) {
         // Just keep the vertex being dragged under the cursor
         if (vertex == selectedVertex) {
             continue;
         }
-        simulateVertexForces(vertex);
-    }
-}
-
-function simulateVertexForces(vertex) {
-    var forcesSumX = 0;
-    var forcesSumY = 0;
-    
-    // calculate pull
-    var neighbours = vertexNeighbours[vertex];
-    for (var i = 0; i < neighbours.length; i++) {
-        var other = neighbours[i];
-        dx = vertexXs[other] - vertexXs[vertex];
-        dy = vertexYs[other] - vertexYs[vertex];
-        // F ~ 1
-        var dr = Math.sqrt(dx*dx + dy*dy);
-        forcesSumX += pull * dx / dr;
-        forcesSumY += pull * dy / dr;
-    }
-
-    // calculate push
-    for (var other = 0; other < numberOfVertices; other++) {
-        if (other == vertex) {
-            continue;
-        }
-        dx = vertexXs[other] - vertexXs[vertex];
-        dy = vertexYs[other] - vertexYs[vertex];
-        // F ~ -1/(r^3)
-        var drSquared = dx*dx + dy*dy;
-        forcesSumX -= push * dx / drSquared / drSquared;
-        forcesSumY -= push * dy / drSquared / drSquared;
-    }
-
-    // Make sure that forcesSum is not arbitrarily big. If it is, two nodes are probably
-    // just on top of each other
-    forcesSumR = Math.sqrt(forcesSumX*forcesSumX + forcesSumY*forcesSumY);
-    if (forcesSumR > maxForce) {
-        forcesSumX *= maxForce / forcesSumR;
-        forcesSumY *= maxForce / forcesSumR;
+        vertexVXs[vertex] += vertexForcesSumXs[vertex] * delta_t;
+        vertexVYs[vertex] += vertexForcesSumYs[vertex] * delta_t;
+        vertexVXs[vertex] *= 0.9;
+        vertexVYs[vertex] *= 0.9;
     }
     
-    // Move the vertex (yes, before the movement of all vertices are
-    // calculated. It is not a problem if delta_t is relatively small.)
-    vertexXs[vertex] += forcesSumX * delta_t;
-    vertexYs[vertex] += forcesSumY * delta_t;
-}
-
-function setDistanceBetweenVertices(vertex1, vertex2) {
-}
-
-function updateDeltaT() {
-    var dt = document.getElementById("delta_t").value;
-    delta_t = Math.exp((50 - dt) / 10) * 100;
-}
-
-function updateTightness() {
-    var tightness = document.getElementById("tightness").value;
-    pull = Math.exp((tightness - 50) / 50) / 100;
-    push = 1 / pull;
-    pull /= 10; // from old code, moved here. not sure what to do about it
+    for (var vertex = 0; vertex < numberOfVertices; vertex++) {
+        vertexXs[vertex] += vertexVXs[vertex];
+        vertexYs[vertex] += vertexVYs[vertex];
+    }
 }
 
 // Rendering stuff
@@ -232,7 +257,7 @@ function drawEdgesAndVertices() {
 function drawNonImportantEdges() {
     setNonImportantStyle();
     for (var edge = 0; edge < edges.length; edge++) {
-        if (shouldEdgeBeShown(edge) && !isEdgeImportant(edge)) {
+        if (!isEdgeImportant(edge)) {
             drawEdge(edge);
         }
     }
@@ -241,7 +266,7 @@ function drawNonImportantEdges() {
 function drawImportantEdges() {
     setImportantStyle();
     for (var edge = 0; edge < edges.length; edge++) {
-        if (shouldEdgeBeShown(edge) && isEdgeImportant(edge)) {
+        if (isEdgeImportant(edge)) {
             drawEdge(edge);
         }
     }
@@ -275,17 +300,6 @@ function setImportantStyle() {
     context.strokeStyle = "#444";
     context.fillStyle = "#444";
     radius = 6;
-}
-
-function shouldEdgeBeShown(edge) {
-    var vertex1 = edges[edge][0];
-    var vertex2 = edges[edge][1];
-    if (document.getElementById("hide-some-edges").checked) {
-        if (!vertexConnectsOthers[vertex1] && !vertexConnectsOthers[vertex2]) {
-            return false;
-        }
-    }
-    return true;
 }
 
 function isEdgeImportant(edge) {
@@ -343,6 +357,7 @@ function onMouseDown(event) {
 function onMouseMove(event) {
     updateMouseCoordinates(event);
     if (isMouseDown) {
+        run();
         moveSelectedVertexToMouse();
     }
     updateLabel();
@@ -402,18 +417,17 @@ function showLabel(text, x, y) {
     vertexInfo.style.top = y + 'px';
 }
 
+function run() {
+    if (stopped) {
+        stopped = false;
+        tick();
+    }
+}
+
 // These must be in the end :(
 
 document.getElementById("updatebutton").onclick = initialize;
-document.getElementById("delta_t").oninput = updateDeltaT;
-document.getElementById("tightness").oninput = updateTightness;
-document.getElementById("stopped").onclick = tick;
-document.getElementById("hide-some-edges").onclick = reDraw;
 document.getElementById("emphasize-important-vertices").onclick = reDraw;
-document.getElementById("savebutton").onclick = save;
-
-updateDeltaT();
-updateTightness();
 
 canvas.addEventListener("mousedown", onMouseDown, true);
 canvas.addEventListener("mouseup", onMouseUp, true);
