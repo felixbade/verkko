@@ -7,10 +7,17 @@
     </head>
     <body>
         <canvas id="graafi">Selaimesi ei tue &lt;canvas&gt;-elementti&amul;.</canvas>
-        <textarea id="data">
+        <div class="container">
+            <textarea id="data">
 Liisa -- Maria -- Sara
 Sara -- Liisa -- Kalle
 Maria -- Leevi</textarea>
+            <br><br>
+            <span id="share">
+                <span id="share-button">Jaa muille</span>
+                <input id="share-url" disabled="disabled">
+            </span>
+        </div>
 
         <div class="sidebar" id="sidebar">
             <span class="toggle-combo">
@@ -22,6 +29,7 @@ Maria -- Leevi</textarea>
         </div>
 
         <div id="vertex-info"></div>
+        <script src="share.js"></script>
         <script src="parser.js"></script>
         <script src="verkko.js"></script>
     </body>
