@@ -11,6 +11,7 @@ var maxForce = 0.01;
 var radius, vertexXs, vertexYs, vertexNames, vertexNeighbours, vertexConnectsOthers, edges, numberOfVertices, graphCenterX, graphCenterY, delta_t, pull, push, dx, dy;
 
 function initialize() {
+    resizeCanvas();
     clearCanvas();
     parseInput();
     tick();
@@ -23,7 +24,7 @@ function tick() {
 }
 
 function isStopped() {
-    return document.getElementById("stopped").checked;
+    return false; // document.getElementById("stopped").checked;
 }
 
 
@@ -180,18 +181,23 @@ function setDistanceBetweenVertices(vertex1, vertex2) {
 }
 
 function updateDeltaT() {
-    var dt = document.getElementById("delta_t").value;
+    var dt = 20; //document.getElementById("delta_t").value;
     delta_t = Math.exp((50 - dt) / 10) * 100;
 }
 
 function updateTightness() {
-    var tightness = document.getElementById("tightness").value;
+    var tightness = 50; //document.getElementById("tightness").value;
     pull = Math.exp((tightness - 50) / 50) / 100;
     push = 1 / pull;
     pull /= 10; // from old code, moved here. not sure what to do about it
 }
 
 // Rendering stuff
+
+function resizeCanvas() {
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+}
 
 function reDraw() {
     clearCanvas();
@@ -280,10 +286,8 @@ function setImportantStyle() {
 function shouldEdgeBeShown(edge) {
     var vertex1 = edges[edge][0];
     var vertex2 = edges[edge][1];
-    if (document.getElementById("hide-some-edges").checked) {
-        if (!vertexConnectsOthers[vertex1] && !vertexConnectsOthers[vertex2]) {
-            return false;
-        }
+    if (!vertexConnectsOthers[vertex1] && !vertexConnectsOthers[vertex2]) {
+        return false;
     }
     return true;
 }
@@ -324,8 +328,7 @@ function drawVertex(vertex) {
 }
 
 function clearCanvas() {
-    context.fillStyle = "white";
-    context.fillRect(0, 0, canvas.width, canvas.height);
+    context.clearRect(0, 0, canvas.width, canvas.height);
 }
 
 // Mouse stuff
@@ -402,18 +405,19 @@ function showLabel(text, x, y) {
     vertexInfo.style.top = y + 'px';
 }
 
+function toggleSidebar() {
+    sidebar.classList.toggle("active");
+}
+
 // These must be in the end :(
 
-document.getElementById("updatebutton").onclick = initialize;
-document.getElementById("delta_t").oninput = updateDeltaT;
-document.getElementById("tightness").oninput = updateTightness;
-document.getElementById("stopped").onclick = tick;
-document.getElementById("hide-some-edges").onclick = reDraw;
+dataInputElement.oninput = initialize;
 document.getElementById("emphasize-important-vertices").onclick = reDraw;
-document.getElementById("savebutton").onclick = save;
+document.body.onresize = resizeCanvas;
 
 updateDeltaT();
 updateTightness();
+initialize();
 
 canvas.addEventListener("mousedown", onMouseDown, true);
 canvas.addEventListener("mouseup", onMouseUp, true);
