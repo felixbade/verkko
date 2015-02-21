@@ -11,9 +11,9 @@ var maxAllowedForce = 10;
 var radius, vertexXs, vertexYs, vertexNames, vertexNeighbours, vertexConnectsOthers, edges, numberOfVertices, graphCenterX, graphCenterY, delta_t, pull, push, dx, dy, stopped, vertexVXs, vertexVYs;
 
 function initialize() {
+    parseInput();
     resizeCanvas();
     clearCanvas();
-    parseInput();
     stopped = false;
     tick();
 }
@@ -221,6 +221,7 @@ function simulateGraphForces() {
 function resizeCanvas() {
     canvas.width = window.innerWidth;
     canvas.height = window.innerHeight;
+    reDraw();
 }
 
 function reDraw() {
@@ -354,6 +355,9 @@ var mouseX, mouseY;
 var selectedVertex = -1;
 
 function onMouseDown(event) {
+    if (event.button != 0) {
+        return;
+    }
     isMouseDown = true;
     updateMouseCoordinates(event);
     selectedVertex = getVertexByMouseCoordinates();
