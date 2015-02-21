@@ -7,11 +7,11 @@ var dataInputElement = document.getElementById("data");
 
 context.lineWidth = 1.5;
 var maxAllowedForce = 10;
-var continueForceThreshold = 0.03;
 
 var radius, vertexXs, vertexYs, vertexNames, vertexNeighbours, vertexConnectsOthers, edges, numberOfVertices, graphCenterX, graphCenterY, delta_t, pull, push, dx, dy, stopped, vertexVXs, vertexVYs;
 
 function initialize() {
+    resizeCanvas();
     clearCanvas();
     parseInput();
     stopped = false;
@@ -217,6 +217,11 @@ function simulateGraphForces() {
 }
 
 // Rendering stuff
+
+function resizeCanvas() {
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+}
 
 function reDraw() {
     clearCanvas();
@@ -426,8 +431,11 @@ function run() {
 
 // These must be in the end :(
 
-document.getElementById("updatebutton").onclick = initialize;
 document.getElementById("emphasize-important-vertices").onclick = reDraw;
+dataInputElement.oninput = initialize;
+initialize();
+
+document.body.onresize = resizeCanvas;
 
 canvas.addEventListener("mousedown", onMouseDown, true);
 canvas.addEventListener("mouseup", onMouseUp, true);
