@@ -274,8 +274,8 @@ function setNonImportantStyle() {
 }
 
 function setImportantStyle() {
-    context.strokeStyle = "#666";
-    context.fillStyle = "#666";
+    context.strokeStyle = "#444";
+    context.fillStyle = "#444";
     radius = 6;
 }
 
