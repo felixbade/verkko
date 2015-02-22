@@ -278,7 +278,7 @@ function setNonImportantStyle() {
     context.strokeStyle = "#ccc";
     context.fillStyle = "#ccc";
     context.lineWidth = sqrtMagnification;
-    radius = 6 * sqrtMagnification;
+    radius = 4 * sqrtMagnification;
 }
 
 function setImportantStyle() {
