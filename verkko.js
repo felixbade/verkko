@@ -5,14 +5,13 @@ var context = canvas.getContext("2d");
 var vertexInfo = document.getElementById("vertex-info");
 var dataInputElement = document.getElementById("data");
 
-context.lineWidth = 1.5;
 var maxAllowedForce = 10;
-var magnification, offsetX, offsetY;
+var magnification, offsetX, offsetY, sqrtMagnification;
 
 var radius, vertexXs, vertexYs, vertexNames, vertexNeighbours, vertexConnectsOthers, edges, numberOfVertices, graphCenterX, graphCenterY, delta_t, pull, push, dx, dy, stopped, vertexVXs, vertexVYs;
 
 function initialize() {
-    magnification = 1;
+    setMagnification(1);
     offsetX = 0;
     offsetY = 0;
     stopped = false;
@@ -278,13 +277,15 @@ function drawImportantVertices() {
 function setNonImportantStyle() {
     context.strokeStyle = "#ccc";
     context.fillStyle = "#ccc";
-    radius = 4;
+    context.lineWidth = sqrtMagnification;
+    radius = 6 * sqrtMagnification;
 }
 
 function setImportantStyle() {
     context.strokeStyle = "#444";
     context.fillStyle = "#444";
-    radius = 6;
+    context.lineWidth = sqrtMagnification;
+    radius = 6 * sqrtMagnification;
 }
 
 function isEdgeImportant(edge) {
@@ -371,7 +372,7 @@ function onMouseWheel(event) {
     var oldX = getUnMappedX(event.clientX);
     var oldY = getUnMappedY(event.clientY);
     var delta_y = Math.min(10, Math.max(-10, event.wheelDeltaY));
-    magnification *= Math.exp(delta_y / 300);
+    setMagnification(magnification * Math.exp(delta_y / 300));
     var newX = getUnMappedX(event.clientX);
     var newY = getUnMappedY(event.clientY);
     offsetX += (newX - oldX) * magnification;
@@ -389,8 +390,8 @@ function getVertexByMouseCoordinates() {
     for (var vertex = 0; vertex < numberOfVertices; vertex++) {
         var dx = getMappedX(vertexXs[vertex]) - mouseX;
         var dy = getMappedY(vertexYs[vertex]) - mouseY;
-        var distance = Math.sqrt(dx*dx + dy*dy);
-        if (distance < 8) {
+        var sDistance = dx*dx + dy*dy;
+        if (sDistance < 64 * magnification) {
             return vertex;
         }
     }
@@ -443,6 +444,11 @@ function getUnMappedX(x) {
 
 function getUnMappedY(y) {
     return (y - offsetY - canvas.height / 2) / magnification;
+}
+
+function setMagnification(m) {
+    magnification = m;
+    sqrtMagnification = Math.sqrt(m);
 }
 
 function run() {
