@@ -191,27 +191,26 @@ function simulateGraphForces() {
     }
     //console.log(vertexForcesSumRs);
 
-    var delta_t = minDistancePerForce / 30; // Prevent bad shaking
-    if (maxForce < 1) {
-        delta_t *= maxForce;
-    }
-    //console.log(minDistancePerForce);
-    if (maxForce < 0.01) {
-        stopped = true;
-    }
-    //console.log(maxForce, delta_t, minDistancePerForce);
-    //console.log(minDistancePerForce);
+    var delta_t = maxForce * minDistancePerForce / 100; // Try to prevent shaking
     
-    //delta_t = Math.min(10000, delta_t);
+    var maxVelocity = 0;
     for (var vertex = 0; vertex < numberOfVertices; vertex++) {
         // Just keep the vertex being dragged under the cursor
         if (vertex == selectedVertex) {
             continue;
         }
-        vertexVXs[vertex] += vertexForcesSumXs[vertex] * delta_t;
-        vertexVYs[vertex] += vertexForcesSumYs[vertex] * delta_t;
+        var vx = vertexForcesSumXs[vertex] * delta_t; 
+        var vy = vertexForcesSumYs[vertex] * delta_t; 
         vertexVXs[vertex] *= 0.9;
         vertexVYs[vertex] *= 0.9;
+        vertexVXs[vertex] += vx;
+        vertexVYs[vertex] += vy;
+        maxVelocity = Math.max(maxVelocity, Math.sqrt(vx*vx + vy*vy));
+    }
+    
+    console.log(maxVelocity);
+    if (maxVelocity < 0.01) {
+        stopped = true;
     }
     
     for (var vertex = 0; vertex < numberOfVertices; vertex++) {
@@ -339,11 +338,11 @@ function onMouseDown(event) {
     if (event.button != 0) {
         return;
     }
-    prevMouseX = event.offsetX;
-    prevMouseY = event.offsetY;
     isMouseDown = true;
     updateMouseCoordinates(event);
     selectedVertex = getVertexByMouseCoordinates();
+    prevMouseX = mouseX;
+    prevMouseY = mouseY;
 }
 
 function onMouseMove(event) {
@@ -353,13 +352,13 @@ function onMouseMove(event) {
             run();
             moveSelectedVertexToMouse();
         } else {
-            offsetX += event.offsetX - prevMouseX;
-            offsetY += event.offsetY - prevMouseY;
+            offsetX += mouseX - prevMouseX;
+            offsetY += mouseY - prevMouseY;
             reDraw();
         }
     }
-    prevMouseX = event.offsetX;
-    prevMouseY = event.offsetY;
+    prevMouseX = mouseX;
+    prevMouseY = mouseY;
     updateLabel();
 }
 
@@ -369,12 +368,12 @@ function onMouseUp(event) {
 }
 
 function onMouseWheel(event) {
-    var oldX = getUnMappedX(event.offsetX);
-    var oldY = getUnMappedY(event.offsetY);
+    var oldX = getUnMappedX(event.clientX);
+    var oldY = getUnMappedY(event.clientY);
     var delta_y = Math.min(10, Math.max(-10, event.wheelDeltaY));
     magnification *= Math.exp(delta_y / 300);
-    var newX = getUnMappedX(event.offsetX);
-    var newY = getUnMappedY(event.offsetY);
+    var newX = getUnMappedX(event.clientX);
+    var newY = getUnMappedY(event.clientY);
     offsetX += (newX - oldX) * magnification;
     offsetY += (newY - oldY) * magnification;
     reDraw();
@@ -382,8 +381,8 @@ function onMouseWheel(event) {
 }
 
 function updateMouseCoordinates(event) {
-    mouseX = event.offsetX;
-    mouseY = event.offsetY;
+    mouseX = event.clientX;
+    mouseY = event.clientY;
 }
 
 function getVertexByMouseCoordinates() {
