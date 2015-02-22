@@ -154,25 +154,18 @@ footer > a
 
 #share
 {
-    padding: 10px 15px;
-    border-radius: 5px;
-    background-color: #ddd;
-    /*border: 1px solid #333;*/
-    margin: 0 8px;
-    
-    /*background-color: #eee;*/
-   /* padding: 4px;
-    border-radius: 2px;
-    background-color: whitesmoke;
-    box-shadow: 0 2px 6px #999;*/
+    margin: 8px 0;
 }
 
 #share-button
 {
-    padding: 1px;
+    padding: 10px 15px;
+    border-radius: 5px;
+    background-color: #ddd;
+    margin: 0 8px;
+    padding: 10px 15px;
 
     cursor: pointer;
-    -webkit-user-select: none;
     -webkit-user-select: none;
        -moz-user-select: none;
         -ms-user-select: none;
@@ -182,6 +175,7 @@ footer > a
 
 #share-url
 {
+    margin: 5px 8px;
     border: none;
     background-color: transparent;
 }
