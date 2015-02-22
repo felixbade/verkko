@@ -332,13 +332,15 @@ function clearCanvas() {
 // Mouse stuff
 
 var isMouseDown = false;
-var mouseX, mouseY;
+var mouseX, mouseY, prevMouseX, prevMouseY;
 var selectedVertex = -1;
 
 function onMouseDown(event) {
     if (event.button != 0) {
         return;
     }
+    prevMouseX = event.offsetX;
+    prevMouseY = event.offsetY;
     isMouseDown = true;
     updateMouseCoordinates(event);
     selectedVertex = getVertexByMouseCoordinates();
@@ -351,11 +353,13 @@ function onMouseMove(event) {
             run();
             moveSelectedVertexToMouse();
         } else {
-            offsetX += event.movementX;
-            offsetY += event.movementY;
+            offsetX += event.offsetX - prevMouseX;
+            offsetY += event.offsetY - prevMouseY;
             reDraw();
         }
     }
+    prevMouseX = event.offsetX;
+    prevMouseY = event.offsetY;
     updateLabel();
 }
 
@@ -368,7 +372,7 @@ function onMouseWheel(event) {
     var oldX = getUnMappedX(event.offsetX);
     var oldY = getUnMappedY(event.offsetY);
     var delta_y = Math.min(10, Math.max(-10, event.wheelDeltaY));
-    magnification *= Math.exp(delta_y / 500);
+    magnification *= Math.exp(delta_y / 300);
     var newX = getUnMappedX(event.offsetX);
     var newY = getUnMappedY(event.offsetY);
     offsetX += (newX - oldX) * magnification;
@@ -384,8 +388,8 @@ function updateMouseCoordinates(event) {
 
 function getVertexByMouseCoordinates() {
     for (var vertex = 0; vertex < numberOfVertices; vertex++) {
-        var dx = vertexXs[vertex] - getUnMappedX(mouseX);
-        var dy = vertexYs[vertex] - getUnMappedY(mouseY);
+        var dx = getMappedX(vertexXs[vertex]) - mouseX;
+        var dy = getMappedY(vertexYs[vertex]) - mouseY;
         var distance = Math.sqrt(dx*dx + dy*dy);
         if (distance < 8) {
             return vertex;
