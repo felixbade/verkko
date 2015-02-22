@@ -117,8 +117,8 @@ function randomCoordinates() {
     vertexVXs = new Array(numberOfVertices);
     vertexVYs = new Array(numberOfVertices);
     for (var i = 0; i < numberOfVertices; i++) {
-        vertexXs[i] = (Math.random() - 0.5) * canvas.width;
-        vertexYs[i] = (Math.random() - 0.5) * canvas.height;
+        vertexXs[i] = (Math.random() - 0.5) * 800;
+        vertexYs[i] = (Math.random() - 0.5) * 800;
         vertexVXs[i] = 0;
         vertexVYs[i] = 0;
     }
